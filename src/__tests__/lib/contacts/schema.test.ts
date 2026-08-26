@@ -1,5 +1,5 @@
 import {
-  CONTACT_FIELDS,
+  CONTACT_VALUE_NAMES,
   contactInputSchema,
   formDataToValues,
   zodFieldErrors,
@@ -80,7 +80,7 @@ describe("formDataToValues", () => {
     expect(extracted.first_name).toBe("Grace");
     expect(extracted.last_name).toBe("");
     expect(Object.keys(extracted).sort()).toEqual(
-      CONTACT_FIELDS.map((field) => field.name).sort(),
+      [...CONTACT_VALUE_NAMES].sort(),
     );
   });
 });

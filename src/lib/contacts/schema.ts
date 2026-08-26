@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { photoDataUrl } from "./photo";
 import type { ContactInput } from "./types";
 
 /**
@@ -46,6 +47,7 @@ export const contactInputSchema = z.object({
   state: optionalText(120, "State"),
   postal_code: optionalText(20, "Postal code"),
   country: optionalText(120, "Country"),
+  photo: photoDataUrl(),
   notes: z
     .string()
     .trim()
@@ -214,14 +216,24 @@ export const CONTACT_FIELDS: ContactFieldSpec[] = CONTACT_FIELD_GROUPS.flatMap(
   (group) => group.fields,
 );
 
+/**
+ * Every key the form submits: the text fields above, plus `photo`, which is
+ * picked with a file input and submitted as a hidden base64 value by
+ * `PhotoField` and so has no `ContactFieldSpec` of its own.
+ */
+export const CONTACT_VALUE_NAMES: (keyof ContactInput)[] = [
+  ...CONTACT_FIELDS.map((field) => field.name),
+  "photo",
+];
+
 /** Pull the contact fields out of a submitted form, as raw strings. */
 export function formDataToValues(
   formData: FormData,
 ): Record<keyof ContactInput, string> {
   return Object.fromEntries(
-    CONTACT_FIELDS.map((field) => [
-      field.name,
-      String(formData.get(field.name) ?? ""),
+    CONTACT_VALUE_NAMES.map((name) => [
+      name,
+      String(formData.get(name) ?? ""),
     ]),
   ) as Record<keyof ContactInput, string>;
 }

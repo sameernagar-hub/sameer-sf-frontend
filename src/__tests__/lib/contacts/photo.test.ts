@@ -1,6 +1,7 @@
 import {
   ACCEPTED_IMAGE_TYPES,
   MAX_PHOTO_BYTES,
+  MAX_SOURCE_BYTES,
   imageFileError,
   photoDataUrl,
 } from "@/lib/contacts/photo";
@@ -25,9 +26,13 @@ describe("imageFileError", () => {
     expect(imageFileError(file("application/pdf", 1024))).toMatch(/PNG, JPEG/);
   });
 
-  it("rejects a file over the size limit", () => {
-    expect(imageFileError(file("image/png", MAX_PHOTO_BYTES + 1))).toMatch(
-      /2 MB or smaller/,
+  it("accepts a camera original, which gets downscaled rather than refused", () => {
+    expect(imageFileError(file("image/png", MAX_PHOTO_BYTES * 8))).toBeNull();
+  });
+
+  it("rejects a file too large to be worth reading at all", () => {
+    expect(imageFileError(file("image/png", MAX_SOURCE_BYTES + 1))).toMatch(
+      /too large to read/,
     );
   });
 });

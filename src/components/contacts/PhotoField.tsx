@@ -4,10 +4,11 @@ import { useRef, useState } from "react";
 import { ImagePlus, Loader2, Trash2, User } from "lucide-react";
 import Button from "@/components/ui/Button";
 import {
-  MAX_PHOTO_LABEL,
+  MAX_PHOTO_BYTES,
   PHOTO_ACCEPT,
   imageFileError,
-  readImageAsDataUrl,
+  photoTooLargeMessage,
+  prepareImage,
 } from "@/lib/contacts/photo";
 
 /**
@@ -49,7 +50,14 @@ export default function PhotoField({
     setLocalError(null);
     setReading(true);
     try {
-      setPhoto(await readImageAsDataUrl(file));
+      const prepared = await prepareImage(file);
+      // Downscaling normally brings any image under the cap; this catches the
+      // fallback path, where the original was sent through untouched.
+      if (prepared.length > Math.ceil(MAX_PHOTO_BYTES / 3) * 4) {
+        setLocalError(photoTooLargeMessage);
+        return;
+      }
+      setPhoto(prepared);
     } catch {
       setLocalError("That image could not be read. Try another file.");
     } finally {
@@ -116,8 +124,8 @@ export default function PhotoField({
           </div>
 
           <p className="text-[13px] text-muted-foreground">
-            PNG, JPEG, GIF, or WebP, up to {MAX_PHOTO_LABEL}. Without a photo,
-            contacts show their initials.
+            PNG, JPEG, GIF, or WebP. Large images are scaled down to an avatar
+            before saving. Without a photo, contacts show their initials.
           </p>
         </div>
       </div>

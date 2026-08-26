@@ -2,7 +2,7 @@ import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import PhotoField from "@/components/contacts/PhotoField";
-import { MAX_PHOTO_BYTES } from "@/lib/contacts/photo";
+import { MAX_SOURCE_BYTES } from "@/lib/contacts/photo";
 
 const PHOTO = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB";
 
@@ -66,15 +66,17 @@ describe("PhotoField", () => {
     );
   });
 
-  it("rejects an oversized image before reading it", async () => {
+  it("rejects a file too large to be worth reading", async () => {
     const { container } = render(<PhotoField />);
 
     await userEvent.upload(
       screen.getByLabelText(/profile photo/i),
-      imageFile("huge.png", "image/png", MAX_PHOTO_BYTES + 1),
+      imageFile("huge.png", "image/png", MAX_SOURCE_BYTES + 1),
     );
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(/2 MB or smaller/);
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      /too large to read/,
+    );
     expect(hiddenPhotoInput(container)).toHaveValue("");
   });
 

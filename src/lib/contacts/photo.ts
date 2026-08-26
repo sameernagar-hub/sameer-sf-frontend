@@ -47,8 +47,16 @@ const PHOTO_DATA_URL =
   /^data:image\/(?:png|jpeg|gif|webp);base64,[A-Za-z0-9+/]+={0,2}$/;
 
 // Base64 inflates by 4/3, so the encoded length bounds the decoded size without
-// decoding it. The prefix adds a few dozen characters; the API is exact.
-const MAX_ENCODED_LENGTH = Math.ceil(MAX_PHOTO_BYTES / 3) * 4 + 64;
+// decoding it.
+const MAX_ENCODED_LENGTH = Math.ceil(MAX_PHOTO_BYTES / 3) * 4;
+
+/**
+ * Whether a `data:` URL's image is over the API's cap, measured on the base64
+ * payload alone so the prefix's length cannot buy extra bytes.
+ */
+export function photoTooLarge(dataUrl: string): boolean {
+  return dataUrl.length - dataUrl.indexOf(",") - 1 > MAX_ENCODED_LENGTH;
+}
 
 const TYPE_ERROR = "Choose a PNG, JPEG, GIF, or WebP image.";
 const SIZE_ERROR = `Photos must be ${MAX_PHOTO_LABEL} or smaller.`;
@@ -68,10 +76,7 @@ export function photoDataUrl() {
     .nullable()
     .default(null)
     .refine((value) => value === null || PHOTO_DATA_URL.test(value), TYPE_ERROR)
-    .refine(
-      (value) => value === null || value.length <= MAX_ENCODED_LENGTH,
-      SIZE_ERROR,
-    );
+    .refine((value) => value === null || !photoTooLarge(value), SIZE_ERROR);
 }
 
 /**

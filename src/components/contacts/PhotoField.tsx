@@ -4,9 +4,9 @@ import { useRef, useState } from "react";
 import { ImagePlus, Loader2, Trash2, User } from "lucide-react";
 import Button from "@/components/ui/Button";
 import {
-  MAX_PHOTO_BYTES,
   PHOTO_ACCEPT,
   imageFileError,
+  photoTooLarge,
   photoTooLargeMessage,
   prepareImage,
 } from "@/lib/contacts/photo";
@@ -23,9 +23,16 @@ import {
 export default function PhotoField({
   defaultValue,
   error,
+  onBusyChange,
 }: {
   defaultValue?: string | null;
   error?: string;
+  /**
+   * Raised while a picked file is being read. The form disables its submit
+   * button, so a quick save cannot serialise the previous hidden value and
+   * silently drop the photo the user just chose.
+   */
+  onBusyChange?: (busy: boolean) => void;
 }) {
   const [photo, setPhoto] = useState<string | null>(defaultValue ?? null);
   const [localError, setLocalError] = useState<string | null>(null);
@@ -33,6 +40,11 @@ export default function PhotoField({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const message = localError ?? error;
+
+  function setBusy(busy: boolean) {
+    setReading(busy);
+    onBusyChange?.(busy);
+  }
 
   async function handleFile(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -48,12 +60,12 @@ export default function PhotoField({
     }
 
     setLocalError(null);
-    setReading(true);
+    setBusy(true);
     try {
       const prepared = await prepareImage(file);
       // Downscaling normally brings any image under the cap; this catches the
       // fallback path, where the original was sent through untouched.
-      if (prepared.length > Math.ceil(MAX_PHOTO_BYTES / 3) * 4) {
+      if (photoTooLarge(prepared)) {
         setLocalError(photoTooLargeMessage);
         return;
       }
@@ -61,7 +73,7 @@ export default function PhotoField({
     } catch {
       setLocalError("That image could not be read. Try another file.");
     } finally {
-      setReading(false);
+      setBusy(false);
     }
   }
 

@@ -89,6 +89,19 @@ describe("PhotoField", () => {
     expect(screen.queryByAltText(/selected profile photo/i)).toBeNull();
   });
 
+  it("reports busy while reading, so the form can hold the save", async () => {
+    const onBusyChange = jest.fn();
+    render(<PhotoField onBusyChange={onBusyChange} />);
+
+    await userEvent.upload(
+      screen.getByLabelText(/profile photo/i),
+      imageFile("ada.png", "image/png"),
+    );
+
+    await waitFor(() => expect(onBusyChange).toHaveBeenCalledWith(false));
+    expect(onBusyChange.mock.calls.map(([busy]) => busy)).toEqual([true, false]);
+  });
+
   it("shows a server-side rejection from the form action", () => {
     render(<PhotoField error="The API rejected that image." />);
 

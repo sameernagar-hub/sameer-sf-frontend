@@ -4,6 +4,7 @@ import {
   MAX_SOURCE_BYTES,
   imageFileError,
   photoDataUrl,
+  photoTooLarge,
 } from "@/lib/contacts/photo";
 
 const PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB";
@@ -34,6 +35,22 @@ describe("imageFileError", () => {
     expect(imageFileError(file("image/png", MAX_SOURCE_BYTES + 1))).toMatch(
       /too large to read/,
     );
+  });
+});
+
+describe("photoTooLarge", () => {
+  const encoded = (payloadLength: number) =>
+    `data:image/png;base64,${"A".repeat(payloadLength)}`;
+
+  const atLimit = Math.ceil(MAX_PHOTO_BYTES / 3) * 4;
+
+  it("measures the base64 payload, not the data URL prefix", () => {
+    expect(photoTooLarge(encoded(atLimit))).toBe(false);
+    expect(photoTooLarge(encoded(atLimit + 1))).toBe(true);
+
+    // A longer prefix must not buy extra payload bytes.
+    const longerPrefix = `data:image/jpeg;base64,${"A".repeat(atLimit + 1)}`;
+    expect(photoTooLarge(longerPrefix)).toBe(true);
   });
 });
 

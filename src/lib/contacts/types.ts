@@ -4,6 +4,22 @@
  */
 
 /** `ContactRead` — a stored contact, as returned by every contact endpoint. */
+export const ADDRESS_TYPES = ["Home", "Work", "Other"] as const;
+export type AddressType = (typeof ADDRESS_TYPES)[number];
+
+export interface Address {
+  id: number;
+  type: AddressType;
+  street: string | null;
+  city: string | null;
+  state: string | null;
+  postal_code: string | null;
+  country: string | null;
+  is_primary: boolean;
+}
+
+export type AddressInput = Omit<Address, "id">;
+
 export interface Contact {
   id: number;
   first_name: string;
@@ -12,11 +28,7 @@ export interface Contact {
   phone: string | null;
   company: string | null;
   job_title: string | null;
-  address: string | null;
-  city: string | null;
-  state: string | null;
-  postal_code: string | null;
-  country: string | null;
+  addresses: Address[];
   /** Profile picture as a base64 `data:` URL, or `null` to show initials. */
   photo: string | null;
   notes: string | null;
@@ -28,8 +40,10 @@ export interface Contact {
 /** Every editable field, i.e. `ContactCreate` / `ContactReplace`. */
 export type ContactInput = Omit<
   Contact,
-  "id" | "created_at" | "updated_at" | "full_name"
->;
+  "id" | "created_at" | "updated_at" | "full_name" | "addresses"
+> & {
+  addresses: AddressInput[];
+};
 
 /** `ContactPage` — one page of contacts plus the totals needed to paginate. */
 export interface ContactPage {
@@ -77,8 +91,10 @@ export type FormState = {
   message?: string;
   /** Per-field messages keyed by input name. */
   fieldErrors?: Partial<Record<keyof ContactInput, string>>;
+  /** Per-address messages keyed by row and address field. */
+  addressErrors?: Array<Partial<Record<keyof AddressInput, string>>>;
   /** Echo of the submitted values so the form survives a failed round trip. */
-  values?: Partial<Record<keyof ContactInput, string>>;
+  values?: Partial<ContactInput>;
 };
 
 export const EMPTY_FORM_STATE: FormState = { status: "idle" };

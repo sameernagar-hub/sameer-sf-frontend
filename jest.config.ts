@@ -48,9 +48,14 @@ const config: Config = {
   ],
   coverageThreshold: {
     global: {
-      lines: 70,
-      functions: 70,
-      branches: 60,
+      lines: 94,
+      functions: 91,
+      branches: 91,
+    },
+    './src/components/contacts/AddressFields.tsx': {
+      lines: 100,
+      functions: 100,
+      branches: 100,
     },
   },
   testMatch: [

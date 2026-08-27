@@ -32,8 +32,45 @@ describe("ContactForm", () => {
 
     expect(screen.getByLabelText(/first name/i)).toHaveValue("Ada");
     expect(screen.getByLabelText(/^email/i)).toHaveValue("ada@example.com");
-    // Nulls become empty inputs rather than the string "null".
-    expect(screen.getByLabelText(/street address/i)).toHaveValue("");
+    expect(screen.getByLabelText(/street address/i)).toHaveValue("1 Market St");
+  });
+
+  it("restores submitted address rows after a failed save", async () => {
+    const action = jest.fn(
+      async (): Promise<FormState> => ({
+        status: "error",
+        message: "Please fix the highlighted fields.",
+        values: {
+          first_name: "Grace",
+          last_name: "Hopper",
+          email: "grace@example.com",
+          phone: null,
+          company: null,
+          job_title: null,
+          photo: null,
+          notes: null,
+          addresses: [
+            {
+              type: "Work",
+              street: "2 Office Plaza",
+              city: "Arlington",
+              state: "VA",
+              postal_code: "22202",
+              country: "USA",
+              is_primary: true,
+            },
+          ],
+        },
+      }),
+    );
+    renderForm(action);
+
+    await userEvent.click(screen.getByRole("button", { name: /create contact/i }));
+
+    expect(await screen.findByLabelText(/street address/i)).toHaveValue(
+      "2 Office Plaza",
+    );
+    expect(screen.getByLabelText("Type")).toHaveValue("Work");
   });
 
   it("submits the entered values to the action", async () => {

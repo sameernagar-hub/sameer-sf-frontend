@@ -7,7 +7,12 @@ import ContactAvatar from "@/components/contacts/ContactAvatar";
 import DeleteContactButton from "@/components/contacts/DeleteContactButton";
 import { buttonClasses } from "@/components/ui/Button";
 import { getContact } from "@/lib/contacts/api";
-import { addressLine, formatTimestamp, jobLine } from "@/lib/contacts/format";
+import {
+  addressLine,
+  formatTimestamp,
+  groupAddressesByType,
+  jobLine,
+} from "@/lib/contacts/format";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -43,7 +48,7 @@ export default async function ContactDetailPage({ params }: PageProps) {
   if (!contact) notFound();
 
   const subtitle = jobLine(contact);
-  const address = addressLine(contact);
+  const addressGroups = groupAddressesByType(contact.addresses);
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 px-4 py-8">
@@ -102,7 +107,31 @@ export default async function ContactDetailPage({ params }: PageProps) {
         </Row>
         <Row label="Company">{contact.company}</Row>
         <Row label="Job title">{contact.job_title}</Row>
-        <Row label="Address">{address}</Row>
+        <Row label="Addresses">
+          {addressGroups.length ? (
+            <div className="space-y-3">
+              {addressGroups.map(([type, rows]) => (
+                <div key={type}>
+                  <div className="mb-1 text-[12px] font-medium uppercase tracking-normal text-muted-foreground">
+                    {type}
+                  </div>
+                  <div className="space-y-1.5">
+                    {rows.map((address) => (
+                      <div key={address.id} className="flex flex-wrap items-center gap-2">
+                        <span>{addressLine(address) ?? "No address details"}</span>
+                        {address.is_primary ? (
+                          <span className="rounded-md border border-primary/30 px-1.5 py-0.5 text-[11px] text-primary">
+                            Primary
+                          </span>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </Row>
         <Row label="Notes">
           {contact.notes ? (
             <span className="whitespace-pre-wrap">{contact.notes}</span>

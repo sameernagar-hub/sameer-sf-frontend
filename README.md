@@ -1,7 +1,8 @@
 # sf-frontend
 
 Front end for the [Contacts API](http://127.0.0.1:8000/docs) — browse, search, sort,
-page through, create, edit, and delete contacts.
+page through, create, edit, and delete contacts. Requires backend `0.2.0` or
+newer for the repeatable `addresses` API.
 
 Next.js 16 (App Router) · TypeScript · Tailwind CSS · Zod · Jest + Testing Library
 + MSW · Playwright.
@@ -63,8 +64,8 @@ Click a row to get here. It confirms the detail read path works end to end:
 - **Header** — avatar, name, and `Job title at Company`, with **Edit**
   (`/contacts/[id]/edit`) and a destructive **Delete** that asks before it acts.
 - **Field table** — email and phone rendered as `mailto:` / `tel:` links, then
-  company, job title, address, and notes. Empty optional fields show `—` rather
-  than collapsing, so the shape of the record stays readable.
+  company, job title, grouped addresses, and notes. Empty optional fields show
+  `—` rather than collapsing, so the shape of the record stays readable.
 - **Metadata table** — `ID`, `Created`, and `Last updated` in UTC, monospaced.
 
 Hand-editing the URL to an ID that does not exist gives you the styled 404 page
@@ -123,8 +124,9 @@ e2e/                      Playwright specs (run against the real API)
   and `GET /health`.
 - **Errors are typed, not swallowed.** `404` becomes `null` (→ the 404 page),
   `409` becomes a field error on email, `422` is unpacked from FastAPI's
-  `HTTPValidationError` into per-field messages, and an unreachable backend
-  becomes `ApiUnreachableError` with a panel that names the URL it tried.
+  `HTTPValidationError` into per-field messages, nested address errors render on
+  the matching address row, and an unreachable backend becomes
+  `ApiUnreachableError` with a panel that names the URL it tried.
 - **List state lives in the URL** (`?q=&sort=&order=&page=&perPage=`), parsed and
   sanitised by `src/lib/contacts/query.ts`. Sorting is validated against the
   API's allow-list, so a hand-edited URL can never produce a 422.
@@ -135,6 +137,12 @@ e2e/                      Playwright specs (run against the real API)
   `src/lib/contacts/schema.ts` drives both the rendered fields and the Zod rules,
   which mirror the API's own limits. Submitting is a real form `action`, so it
   works before hydration; `useActionState` surfaces what comes back.
+- **Addresses** — address rows post as indexed fields such as
+  `addresses.0.type` and `addresses.0.street`; `formDataToValues` rebuilds the
+  dense `addresses` array for the server action. The form uses one radio group
+  named `addresses.primary`, so only one row can be primary in the UI. `PUT`
+  sends the complete collection, which preserves existing rows during edit
+  saves; an empty list deliberately clears all addresses.
 - **Styling** — Tailwind against semantic CSS variables (`bg-background`,
   `text-muted-foreground`, `border-hairline`, …) defined in `src/app/globals.css`.
   Dark is the default; light lives under `[data-theme="light"]`. Add colours as

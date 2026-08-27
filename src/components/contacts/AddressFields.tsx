@@ -5,7 +5,8 @@ import { Plus, Trash2 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { ADDRESS_TYPES, type AddressInput } from "@/lib/contacts/types";
 
-type AddressDraft = AddressInput & { key: string };
+type AddressErrors = Partial<Record<keyof AddressInput, string>>;
+type AddressDraft = AddressInput & { errors?: AddressErrors; key: string };
 
 const CONTROL =
   "w-full rounded-md border border-border bg-input px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 transition-colors focus:border-primary focus:bg-input";
@@ -33,8 +34,8 @@ function blankAddress(isPrimary: boolean): AddressDraft {
   };
 }
 
-function toDraft(address: AddressInput, index: number): AddressDraft {
-  return { ...address, key: `${index}-${address.type}-${address.street ?? ""}` };
+function toDraft(address: AddressInput, index: number, errors?: AddressErrors): AddressDraft {
+  return { ...address, errors, key: `${index}-${address.type}-${address.street ?? ""}` };
 }
 
 export default function AddressFields({
@@ -47,8 +48,8 @@ export default function AddressFields({
   collectionError?: string;
 }) {
   const initialRows = useMemo(
-    () => addresses.map((address, index) => toDraft(address, index)),
-    [addresses],
+    () => addresses.map((address, index) => toDraft(address, index, errors?.[index])),
+    [addresses, errors],
   );
   const [rows, setRows] = useState<AddressDraft[]>(initialRows);
 
@@ -92,12 +93,20 @@ export default function AddressFields({
           {rows.map((row, index) => (
             <div key={row.key} className="rounded-md border border-border p-3">
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                <label className="flex min-w-40 flex-col gap-1 text-[13px] font-medium text-foreground">
-                  Type
+                <div className="flex min-w-40 flex-col gap-1">
+                  <label
+                    htmlFor={`address-${index}-type`}
+                    className="text-[13px] font-medium text-foreground"
+                  >
+                    Type
+                  </label>
                   <select
+                    id={`address-${index}-type`}
                     name={`addresses.${index}.type`}
                     defaultValue={row.type}
-                    className={CONTROL}
+                    aria-invalid={row.errors?.type ? true : undefined}
+                    aria-describedby={row.errors?.type ? `address-${index}-type-error` : undefined}
+                    className={`${CONTROL} ${row.errors?.type ? "border-destructive focus:border-destructive" : ""}`}
                   >
                     {ADDRESS_TYPES.map((type) => (
                       <option key={type} value={type}>
@@ -105,7 +114,16 @@ export default function AddressFields({
                       </option>
                     ))}
                   </select>
-                </label>
+                  {row.errors?.type ? (
+                    <p
+                      id={`address-${index}-type-error`}
+                      role="alert"
+                      className="text-[13px] font-normal text-destructive"
+                    >
+                      {row.errors.type}
+                    </p>
+                  ) : null}
+                </div>
 
                 <label className="inline-flex items-center gap-2 text-[13px] text-foreground">
                   <input
@@ -131,7 +149,7 @@ export default function AddressFields({
 
               <div className="grid gap-3 sm:grid-cols-2">
                 {TEXT_FIELDS.map(([name, label, placeholder]) => {
-                  const error = errors?.[index]?.[name];
+                  const error = row.errors?.[name];
                   const id = `address-${index}-${name}`;
                   return (
                     <div key={name} className={name === "street" ? "sm:col-span-2" : undefined}>

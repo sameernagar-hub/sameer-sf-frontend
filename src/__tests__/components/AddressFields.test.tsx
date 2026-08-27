@@ -108,4 +108,68 @@ describe("AddressFields", () => {
       "true",
     );
   });
+
+  it("renders type errors on the type select", () => {
+    render(
+      <AddressFields
+        addresses={[
+          {
+            type: "Home",
+            street: null,
+            city: null,
+            state: null,
+            postal_code: null,
+            country: null,
+            is_primary: false,
+          },
+        ]}
+        errors={[{ type: "Invalid address type" }]}
+      />,
+    );
+
+    expect(screen.getByText("Invalid address type")).toHaveAttribute("role", "alert");
+    expect(screen.getByLabelText("Type")).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByLabelText("Type")).toHaveAccessibleDescription(
+      "Invalid address type",
+    );
+  });
+
+  it("keeps errors attached to their row after removing a preceding row", async () => {
+    render(
+      <AddressFields
+        addresses={[
+          {
+            type: "Home",
+            street: "1 Market St",
+            city: null,
+            state: null,
+            postal_code: null,
+            country: null,
+            is_primary: false,
+          },
+          {
+            type: "Work",
+            street: "1355 Market St",
+            city: null,
+            state: null,
+            postal_code: null,
+            country: null,
+            is_primary: false,
+          },
+        ]}
+        errors={[
+          { street: "Home street is invalid" },
+          { city: "Work city is required" },
+        ]}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "Remove address 1" }));
+
+    expect(screen.queryByText("Home street is invalid")).toBeNull();
+    expect(screen.getByText("Work city is required")).toHaveAttribute("role", "alert");
+    expect(screen.getByLabelText(/city/i)).toHaveAccessibleDescription(
+      "Work city is required",
+    );
+  });
 });

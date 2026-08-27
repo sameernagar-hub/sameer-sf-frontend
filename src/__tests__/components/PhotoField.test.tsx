@@ -1,7 +1,17 @@
 import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+
+jest.mock("@/lib/contacts/photo", () => {
+  const actual = jest.requireActual("@/lib/contacts/photo");
+  return {
+    ...actual,
+    prepareImage: jest.fn(actual.prepareImage),
+  };
+});
+
 import PhotoField from "@/components/contacts/PhotoField";
+import * as photoModule from "@/lib/contacts/photo";
 import { MAX_SOURCE_BYTES } from "@/lib/contacts/photo";
 
 const PHOTO = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB";
@@ -87,6 +97,36 @@ describe("PhotoField", () => {
 
     expect(hiddenPhotoInput(container)).toHaveValue("");
     expect(screen.queryByAltText(/selected profile photo/i)).toBeNull();
+  });
+
+  it("does not allow removal to race an in-flight replacement", async () => {
+    let resolvePrepared!: (value: string) => void;
+    const prepared = new Promise<string>((resolve) => {
+      resolvePrepared = resolve;
+    });
+    const prepareImageMock = photoModule.prepareImage as jest.MockedFunction<
+      typeof photoModule.prepareImage
+    >;
+    prepareImageMock.mockReturnValueOnce(prepared);
+
+    const { container } = render(<PhotoField defaultValue={PHOTO} />);
+
+    await userEvent.upload(
+      screen.getByLabelText(/profile photo/i),
+      imageFile("ada.png", "image/png"),
+    );
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /remove/i })).toBeDisabled(),
+    );
+
+    resolvePrepared("data:image/png;base64,replacement");
+
+    await waitFor(() =>
+      expect(hiddenPhotoInput(container)).toHaveValue(
+        "data:image/png;base64,replacement",
+      ),
+    );
   });
 
   it("reports busy while reading, so the form can hold the save", async () => {

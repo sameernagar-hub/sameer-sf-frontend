@@ -38,6 +38,7 @@ export default function PhotoField({
   const [localError, setLocalError] = useState<string | null>(null);
   const [reading, setReading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const operationRef = useRef(0);
 
   const message = localError ?? error;
 
@@ -59,10 +60,13 @@ export default function PhotoField({
       return;
     }
 
+    const operation = operationRef.current + 1;
+    operationRef.current = operation;
     setLocalError(null);
     setBusy(true);
     try {
       const prepared = await prepareImage(file);
+      if (operationRef.current !== operation) return;
       // Downscaling normally brings any image under the cap; this catches the
       // fallback path, where the original was sent through untouched.
       if (photoTooLarge(prepared)) {
@@ -71,15 +75,20 @@ export default function PhotoField({
       }
       setPhoto(prepared);
     } catch {
+      if (operationRef.current !== operation) return;
       setLocalError("That image could not be read. Try another file.");
     } finally {
-      setBusy(false);
+      if (operationRef.current === operation) {
+        setBusy(false);
+      }
     }
   }
 
   function removePhoto() {
+    operationRef.current += 1;
     setPhoto(null);
     setLocalError(null);
+    if (reading) setBusy(false);
   }
 
   return (
@@ -128,7 +137,7 @@ export default function PhotoField({
             </Button>
 
             {photo ? (
-              <Button variant="ghost" size="sm" onClick={removePhoto}>
+              <Button variant="ghost" size="sm" disabled={reading} onClick={removePhoto}>
                 <Trash2 className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
                 Remove
               </Button>

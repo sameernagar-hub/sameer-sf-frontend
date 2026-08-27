@@ -5,6 +5,15 @@ All notable changes to this project are documented here.
 This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-08-27
+
+### Added
+
+- Contacts without uploaded photos now render deterministic local SVG avatar
+  images generated from their name and email.
+- The contacts table shows an actual avatar image in every row without calling
+  any external avatar API.
+
 ## [0.2.0] - 2026-08-26
 
 ### Added

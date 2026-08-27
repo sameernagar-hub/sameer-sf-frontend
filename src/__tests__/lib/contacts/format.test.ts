@@ -2,6 +2,7 @@ import {
   addressLine,
   avatarHue,
   formatTimestamp,
+  generatedAvatarDataUrl,
   groupAddressesByType,
   initials,
   jobLine,
@@ -35,6 +36,29 @@ describe("avatarHue", () => {
 
   it("separates different seeds", () => {
     expect(avatarHue("ada@example.com")).not.toBe(avatarHue("grace@example.com"));
+  });
+});
+
+describe("generatedAvatarDataUrl", () => {
+  it("builds a deterministic local SVG avatar", () => {
+    const contact = makeContact({ photo: null });
+
+    expect(generatedAvatarDataUrl(contact)).toBe(generatedAvatarDataUrl(contact));
+    expect(decodeURIComponent(generatedAvatarDataUrl(contact))).toContain("<text");
+    expect(decodeURIComponent(generatedAvatarDataUrl(contact))).toContain("AL</text>");
+  });
+
+  it("escapes initials before embedding them in SVG text", () => {
+    const src = decodeURIComponent(
+      generatedAvatarDataUrl({
+        first_name: "<",
+        last_name: "&",
+        email: "symbols@example.com",
+      }),
+    );
+
+    expect(src).toContain("&lt;&amp;</text>");
+    expect(src).not.toContain("<&</text>");
   });
 });
 

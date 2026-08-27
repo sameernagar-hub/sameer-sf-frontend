@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { avatarHue, initials } from "@/lib/contacts/format";
+import { avatarHue, generatedAvatarDataUrl } from "@/lib/contacts/format";
 import type { Contact } from "@/lib/contacts/types";
 
 const SIZES = {
@@ -9,8 +9,8 @@ const SIZES = {
 } as const;
 
 /**
- * Circular profile image when the contact has a photo, otherwise an initials
- * bubble tinted with a hue derived from their email.
+ * Circular profile image when the contact has a photo, otherwise a local SVG
+ * avatar generated from their name and email. No external avatar API is used.
  */
 export default function ContactAvatar({
   contact,
@@ -23,27 +23,16 @@ export default function ContactAvatar({
     "--avatar-hue": avatarHue(contact.email),
   } as CSSProperties;
 
-  if (contact.photo) {
-    return (
-      // The photo is a base64 data URL, so next/image has nothing to optimise
-      // or to fetch — it is already inline in the payload.
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={contact.photo}
-        alt=""
-        aria-hidden="true"
-        className={`inline-block aspect-square shrink-0 rounded-full border border-hairline object-cover ${SIZES[size]}`}
-      />
-    );
-  }
-
   return (
-    <span
+    // The source is either an inline uploaded photo or an inline generated SVG,
+    // so next/image has nothing to optimise or fetch.
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={contact.photo ?? generatedAvatarDataUrl(contact)}
+      alt=""
       aria-hidden="true"
       style={style}
-      className={`contact-avatar inline-flex shrink-0 select-none items-center justify-center rounded-full font-display font-semibold ${SIZES[size]}`}
-    >
-      {initials(contact)}
-    </span>
+      className={`contact-avatar inline-block aspect-square shrink-0 select-none rounded-full border border-hairline object-cover ${SIZES[size]}`}
+    />
   );
 }

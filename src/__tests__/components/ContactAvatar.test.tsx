@@ -16,6 +16,17 @@ describe("ContactAvatar", () => {
     expect(image).toHaveClass("rounded-full", "object-cover", "aspect-square");
   });
 
+  it("treats an empty photo string as missing", () => {
+    const { container } = render(
+      <ContactAvatar contact={makeContact({ photo: "" })} />,
+    );
+
+    expect(container.querySelector("img")).toHaveAttribute(
+      "src",
+      expect.stringMatching(/^data:image\/svg\+xml/),
+    );
+  });
+
   it("renders a circular image when the contact has a photo", () => {
     const { container } = render(
       <ContactAvatar contact={makeContact({ photo: PHOTO })} />,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Accessibility, BookOpen, Check, Languages, Type } from "lucide-react";
 import Button from "@/components/ui/Button";
 
@@ -19,9 +19,20 @@ function readSettings(): Settings {
   if (typeof window === "undefined") return DEFAULT_SETTINGS;
 
   try {
-    return { ...DEFAULT_SETTINGS, ...JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? "{}") };
+    return {
+      ...DEFAULT_SETTINGS,
+      ...JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? "{}"),
+    };
   } catch {
     return DEFAULT_SETTINGS;
+  }
+}
+
+function writeSettings(settings: Settings) {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+  } catch {
+    // Storage can be blocked; keep the in-memory setting working for this page.
   }
 }
 
@@ -72,6 +83,7 @@ function ToggleRow({
 
 export default function AccessibilityMenu() {
   const panelId = useId();
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
   const [settings, setSettings] = useState<Settings>(() => readSettings());
 
@@ -79,10 +91,23 @@ export default function AccessibilityMenu() {
     applySettings(settings);
   }, [settings]);
 
+  useEffect(() => {
+    if (!open) return undefined;
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      setOpen(false);
+      triggerRef.current?.focus();
+    }
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open]);
+
   function setSetting(name: Setting) {
     setSettings((current) => {
       const next = { ...current, [name]: !current[name] };
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      writeSettings(next);
       return next;
     });
   }
@@ -90,6 +115,7 @@ export default function AccessibilityMenu() {
   return (
     <div className="relative">
       <Button
+        ref={triggerRef}
         variant="ghost"
         size="sm"
         aria-expanded={open}

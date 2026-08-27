@@ -22,13 +22,14 @@ export default function ContactAvatar({
   const style = {
     "--avatar-hue": avatarHue(contact.email),
   } as CSSProperties;
+  const source = contact.photo || generatedAvatarDataUrl(contact);
 
   return (
     // The source is either an inline uploaded photo or an inline generated SVG,
     // so next/image has nothing to optimise or fetch.
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={contact.photo ?? generatedAvatarDataUrl(contact)}
+      src={source}
       alt=""
       aria-hidden="true"
       style={style}

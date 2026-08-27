@@ -110,4 +110,32 @@ describe("AppShell", () => {
     expect(document.documentElement.dataset.textSize).toBe("large");
     expect(document.documentElement.dataset.contrast).toBe("more");
   });
+
+  it("closes the accessibility help with Escape and returns focus", async () => {
+    renderShell();
+
+    const trigger = screen.getByRole("button", { name: /accessibility and help/i });
+    await userEvent.click(trigger);
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+
+    await userEvent.keyboard("{Escape}");
+
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(trigger).toHaveFocus();
+  });
+
+  it("keeps accessibility toggles working when storage is blocked", async () => {
+    const setItem = jest
+      .spyOn(Storage.prototype, "setItem")
+      .mockImplementation(() => {
+        throw new Error("storage blocked");
+      });
+    renderShell();
+
+    await userEvent.click(screen.getByRole("button", { name: /accessibility and help/i }));
+    await userEvent.click(screen.getByRole("switch", { name: /larger text/i }));
+
+    expect(document.documentElement.dataset.textSize).toBe("large");
+    setItem.mockRestore();
+  });
 });

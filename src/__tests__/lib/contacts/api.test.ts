@@ -9,6 +9,7 @@ import {
   getContact,
   getHealth,
   listContacts,
+  toAddressErrors,
   toFieldErrors,
 } from "@/lib/contacts/api";
 import type { ContactInput } from "@/lib/contacts/types";
@@ -24,11 +25,7 @@ const INPUT: ContactInput = {
   phone: null,
   company: null,
   job_title: null,
-  address: null,
-  city: null,
-  state: null,
-  postal_code: null,
-  country: null,
+  addresses: [],
   photo: null,
   notes: null,
 };
@@ -162,7 +159,40 @@ describe("error translation", () => {
     });
   });
 
+  it("keeps root-level address errors visible", () => {
+    const error = new ApiError(
+      422,
+      JSON.stringify({
+        detail: [{ loc: ["body", "addresses"], msg: "Use 20 addresses or fewer" }],
+      }),
+    );
+
+    expect(toFieldErrors(error)).toEqual({
+      addresses: "Use 20 addresses or fewer",
+    });
+  });
+
+  it("routes nested address validation errors by row", () => {
+    const error = new ApiError(
+      422,
+      JSON.stringify({
+        detail: [
+          { loc: ["body", "addresses", 1, "postal_code"], msg: "too long" },
+          { loc: ["body", "addresses", 1, "type"], msg: "invalid enum" },
+          { loc: ["body", "email"], msg: "bad email" },
+        ],
+      }),
+    );
+
+    expect(toFieldErrors(error)).toEqual({ email: "bad email" });
+    expect(toAddressErrors(error)).toEqual([
+      undefined,
+      { postal_code: "too long", type: "invalid enum" },
+    ]);
+  });
+
   it("returns nothing for a non-validation body", () => {
     expect(toFieldErrors(new ApiError(500, "boom"))).toEqual({});
+    expect(toAddressErrors(new ApiError(500, "boom"))).toEqual([]);
   });
 });

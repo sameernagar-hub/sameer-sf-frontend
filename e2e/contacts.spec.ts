@@ -11,13 +11,25 @@ function uniqueEmail(prefix: string): string {
 
 async function createContact(
   page: Page,
-  fields: { first: string; last: string; email: string; company?: string },
+  fields: {
+    first: string
+    last: string
+    email: string
+    company?: string
+    street?: string
+    city?: string
+  },
 ) {
   await page.goto('/contacts/new')
   await page.getByLabel('First name').fill(fields.first)
   await page.getByLabel('Last name').fill(fields.last)
   await page.getByLabel('Email', { exact: false }).first().fill(fields.email)
   if (fields.company) await page.getByLabel('Company').fill(fields.company)
+  if (fields.street || fields.city) {
+    await page.getByRole('button', { name: 'Add address' }).click()
+    if (fields.street) await page.getByLabel('Street address').fill(fields.street)
+    if (fields.city) await page.getByLabel('City').fill(fields.city)
+  }
   await page.getByRole('button', { name: 'Create contact' }).click()
 
   await expect(
@@ -52,9 +64,12 @@ test.describe('Contacts', () => {
       last,
       email,
       company: 'Playwright Inc',
+      street: '1 Playwright Way',
+      city: 'San Francisco',
     })
     await expect(page.getByRole('link', { name: email })).toBeVisible()
     await expect(page.getByText('Playwright Inc').first()).toBeVisible()
+    await expect(page.getByText('1 Playwright Way, San Francisco')).toBeVisible()
 
     // Search narrows the list to the new contact.
     await page.goto('/contacts')
@@ -69,6 +84,7 @@ test.describe('Contacts', () => {
     await page.getByLabel('Job title').fill('Chief Engineer')
     await page.getByRole('button', { name: 'Save changes' }).click()
     await expect(page.getByText('Chief Engineer').first()).toBeVisible()
+    await expect(page.getByText('1 Playwright Way, San Francisco')).toBeVisible()
 
     await deleteFromDetailPage(page, `Testy ${last}`)
 

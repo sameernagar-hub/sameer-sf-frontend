@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { photoDataUrl } from "./photo";
-import type { ContactInput } from "./types";
+import { ADDRESS_TYPES, type AddressInput, type ContactInput } from "./types";
 
 /**
  * Client/server-shared validation for the contact form.
@@ -42,11 +42,23 @@ export const contactInputSchema = z.object({
   phone: optionalText(40, "Phone"),
   company: optionalText(200, "Company"),
   job_title: optionalText(200, "Job title"),
-  address: optionalText(300, "Address"),
-  city: optionalText(120, "City"),
-  state: optionalText(120, "State"),
-  postal_code: optionalText(20, "Postal code"),
-  country: optionalText(120, "Country"),
+  addresses: z
+    .array(
+      z.object({
+        type: z.enum(ADDRESS_TYPES),
+        street: optionalText(300, "Street address"),
+        city: optionalText(120, "City"),
+        state: optionalText(120, "State / region"),
+        postal_code: optionalText(20, "Postal code"),
+        country: optionalText(120, "Country"),
+        is_primary: z.coerce.boolean().default(false),
+      }) satisfies z.ZodType<AddressInput, unknown>,
+    )
+    .max(20, "Use 20 addresses or fewer")
+    .refine(
+      (addresses) => addresses.filter((address) => address.is_primary).length <= 1,
+      "Only one address can be primary",
+    ),
   photo: photoDataUrl(),
   notes: z
     .string()
@@ -65,11 +77,26 @@ export function zodFieldErrors(
   const fieldErrors: Partial<Record<keyof ContactInput, string>> = {};
   for (const issue of error.issues) {
     const key = issue.path[0];
+    if (key === "addresses" && issue.path.length > 1) continue;
     if (typeof key === "string" && !(key in fieldErrors)) {
       fieldErrors[key as keyof ContactInput] = issue.message;
     }
   }
   return fieldErrors;
+}
+
+export function zodAddressErrors(
+  error: z.ZodError,
+): Array<Partial<Record<keyof AddressInput, string>>> {
+  const addressErrors: Array<Partial<Record<keyof AddressInput, string>>> = [];
+  for (const issue of error.issues) {
+    const [scope, index, field] = issue.path;
+    if (scope === "addresses" && typeof index === "number" && typeof field === "string") {
+      addressErrors[index] ??= {};
+      addressErrors[index][field as keyof AddressInput] ??= issue.message;
+    }
+  }
+  return addressErrors;
 }
 
 /* ------------------------------------------------------------------ */
@@ -155,48 +182,6 @@ export const CONTACT_FIELD_GROUPS: ContactFieldGroup[] = [
     ],
   },
   {
-    title: "Address",
-    description: "Optional postal details.",
-    fields: [
-      {
-        name: "address",
-        label: "Street address",
-        maxLength: 300,
-        placeholder: "1 Market St, Suite 400",
-        autoComplete: "street-address",
-        wide: true,
-      },
-      {
-        name: "city",
-        label: "City",
-        maxLength: 120,
-        placeholder: "San Francisco",
-        autoComplete: "address-level2",
-      },
-      {
-        name: "state",
-        label: "State / region",
-        maxLength: 120,
-        placeholder: "CA",
-        autoComplete: "address-level1",
-      },
-      {
-        name: "postal_code",
-        label: "Postal code",
-        maxLength: 20,
-        placeholder: "94105",
-        autoComplete: "postal-code",
-      },
-      {
-        name: "country",
-        label: "Country",
-        maxLength: 120,
-        placeholder: "USA",
-        autoComplete: "country-name",
-      },
-    ],
-  },
-  {
     title: "Notes",
     description: "Anything worth remembering. No length limit.",
     fields: [
@@ -226,14 +211,62 @@ export const CONTACT_VALUE_NAMES: (keyof ContactInput)[] = [
   "photo",
 ];
 
-/** Pull the contact fields out of a submitted form, as raw strings. */
+const ADDRESS_FIELD_NAMES = [
+  "type",
+  "street",
+  "city",
+  "state",
+  "postal_code",
+  "country",
+] as const satisfies readonly (keyof AddressInput)[];
+
+function emptyAddress(): AddressInput {
+  return {
+    type: "Home",
+    street: null,
+    city: null,
+    state: null,
+    postal_code: null,
+    country: null,
+    is_primary: false,
+  };
+}
+
+/** Pull the contact fields out of a submitted form, preserving address rows. */
 export function formDataToValues(
   formData: FormData,
-): Record<keyof ContactInput, string> {
-  return Object.fromEntries(
+): ContactInput {
+  const values = Object.fromEntries(
     CONTACT_VALUE_NAMES.map((name) => [
       name,
       String(formData.get(name) ?? ""),
     ]),
-  ) as Record<keyof ContactInput, string>;
+  ) as Omit<ContactInput, "addresses">;
+
+  const buckets = new Map<number, Partial<AddressInput>>();
+  for (const key of formData.keys()) {
+    const match = /^addresses\.(\d+)\.(\w+)$/.exec(key);
+    if (!match) continue;
+    const [, rawIndex, rawField] = match;
+    const field = rawField as keyof AddressInput;
+    if (!ADDRESS_FIELD_NAMES.includes(field as never)) continue;
+
+    const index = Number(rawIndex);
+    const row = buckets.get(index) ?? {};
+    row[field] = String(formData.get(key) ?? "") as never;
+    buckets.set(index, row);
+  }
+
+  const primary = formData.get("addresses.primary");
+  const primaryIndex = primary === null || primary === "" ? null : Number(primary);
+  return {
+    ...values,
+    addresses: [...buckets.entries()]
+      .sort(([left], [right]) => left - right)
+      .map(([index, row]) => ({
+        ...emptyAddress(),
+        ...row,
+        is_primary: primaryIndex === index,
+      })),
+  };
 }

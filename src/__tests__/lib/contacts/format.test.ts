@@ -2,10 +2,23 @@ import {
   addressLine,
   avatarHue,
   formatTimestamp,
+  groupAddressesByType,
   initials,
   jobLine,
 } from "@/lib/contacts/format";
+import type { Address } from "@/lib/contacts/types";
 import { makeContact } from "../../mocks/handlers";
+
+const ADDRESS: Address = {
+  id: 1,
+  type: "Home",
+  street: "1 Market St",
+  city: "San Francisco",
+  state: "CA",
+  postal_code: "94105",
+  country: "USA",
+  is_primary: true,
+};
 
 describe("initials", () => {
   it("takes the first letter of each name", () => {
@@ -51,20 +64,38 @@ describe("jobLine", () => {
 
 describe("addressLine", () => {
   it("skips the parts that are not filled in", () => {
-    expect(addressLine(makeContact())).toBe("San Francisco, CA, USA");
+    expect(addressLine({ ...ADDRESS, street: null, postal_code: null })).toBe(
+      "San Francisco, CA, USA",
+    );
   });
 
   it("pairs the state with the postal code", () => {
-    expect(
-      addressLine(makeContact({ address: "1 Market St", postal_code: "94105" })),
-    ).toBe("1 Market St, San Francisco, CA 94105, USA");
+    expect(addressLine(ADDRESS)).toBe("1 Market St, San Francisco, CA 94105, USA");
   });
 
   it("returns null when there is no address at all", () => {
     expect(
-      addressLine(
-        makeContact({ city: null, state: null, country: null, postal_code: null }),
-      ),
+      addressLine({
+        ...ADDRESS,
+        street: null,
+        city: null,
+        state: null,
+        postal_code: null,
+        country: null,
+      }),
     ).toBeNull();
+  });
+});
+
+describe("groupAddressesByType", () => {
+  it("orders groups by type and primary rows first", () => {
+    const groups = groupAddressesByType([
+      { ...ADDRESS, id: 1, type: "Work", is_primary: false },
+      { ...ADDRESS, id: 2, type: "Home", is_primary: false },
+      { ...ADDRESS, id: 3, type: "Work", is_primary: true },
+    ]);
+
+    expect(groups.map(([type]) => type)).toEqual(["Home", "Work"]);
+    expect(groups[1][1].map((address) => address.id)).toEqual([3, 1]);
   });
 });

@@ -15,14 +15,26 @@ const DEFAULT_SETTINGS: Settings = {
   contrast: false,
 };
 
+function normalizeSettings(value: unknown): Settings {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return DEFAULT_SETTINGS;
+  }
+
+  const stored = value as Partial<Record<Setting, unknown>>;
+
+  return {
+    plain: typeof stored.plain === "boolean" ? stored.plain : DEFAULT_SETTINGS.plain,
+    large: typeof stored.large === "boolean" ? stored.large : DEFAULT_SETTINGS.large,
+    contrast:
+      typeof stored.contrast === "boolean" ? stored.contrast : DEFAULT_SETTINGS.contrast,
+  };
+}
+
 function readSettings(): Settings {
   if (typeof window === "undefined") return DEFAULT_SETTINGS;
 
   try {
-    return {
-      ...DEFAULT_SETTINGS,
-      ...JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? "{}"),
-    };
+    return normalizeSettings(JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? "{}"));
   } catch {
     return DEFAULT_SETTINGS;
   }

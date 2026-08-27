@@ -138,4 +138,35 @@ describe("AppShell", () => {
     expect(document.documentElement.dataset.textSize).toBe("large");
     setItem.mockRestore();
   });
+
+  it("ignores malformed saved accessibility settings", async () => {
+    window.localStorage.setItem(
+      "sfcontacts-accessibility",
+      JSON.stringify({
+        plain: true,
+        large: "false",
+        contrast: null,
+      }),
+    );
+
+    renderShell();
+
+    await userEvent.click(screen.getByRole("button", { name: /accessibility and help/i }));
+
+    expect(screen.getByRole("switch", { name: /plain words/i })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+    expect(screen.getByRole("switch", { name: /larger text/i })).toHaveAttribute(
+      "aria-checked",
+      "false",
+    );
+    expect(screen.getByRole("switch", { name: /more contrast/i })).toHaveAttribute(
+      "aria-checked",
+      "false",
+    );
+    expect(document.documentElement.dataset.simpleHelp).toBe("on");
+    expect(document.documentElement.dataset.textSize).toBe("normal");
+    expect(document.documentElement.dataset.contrast).toBe("normal");
+  });
 });

@@ -72,6 +72,10 @@ export default function AddressFields({
         <p className="text-[13px] text-muted-foreground">
           Home, work, and other places for this contact.
         </p>
+        <p className="simple-help mt-1 text-sm leading-6 text-muted-foreground">
+          Add one row for each place. Primary means the main address. Only one row
+          can be primary.
+        </p>
       </div>
 
       {collectionError ? (

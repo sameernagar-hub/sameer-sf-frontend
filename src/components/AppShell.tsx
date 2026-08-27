@@ -3,6 +3,7 @@
 import { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import AccessibilityMenu from "@/components/AccessibilityMenu";
 import ThemeToggle from "@/components/ThemeToggle";
 import VersionFooter from "@/components/VersionFooter";
 
@@ -40,6 +41,12 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen flex-col">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-md focus:bg-primary focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-primary-foreground"
+      >
+        Skip to contacts
+      </a>
       <header className="sticky top-0 z-40 border-b border-hairline bg-card/95 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-5xl items-center gap-6 px-4">
           <Link href="/contacts" className="flex items-center gap-2">
@@ -68,12 +75,15 @@ export default function AppShell({ children }: { children: ReactNode }) {
           </nav>
 
           <div className="ml-auto flex items-center gap-1">
+            <AccessibilityMenu />
             <ThemeToggle />
           </div>
         </div>
       </header>
 
-      <main className="flex-1">{children}</main>
+      <main id="main-content" tabIndex={-1} className="flex-1">
+        {children}
+      </main>
 
       <VersionFooter />
     </div>

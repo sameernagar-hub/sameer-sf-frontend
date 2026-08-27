@@ -7,6 +7,7 @@ describe("AddressFields", () => {
   it("starts empty and adds a primary home address", async () => {
     const { container } = render(<AddressFields addresses={[]} />);
 
+    expect(screen.getByText(/add one row for each place/i)).toBeInTheDocument();
     expect(screen.getByText("No addresses saved.")).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: /add address/i }));

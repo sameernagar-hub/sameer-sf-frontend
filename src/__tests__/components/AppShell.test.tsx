@@ -1,5 +1,6 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import ThemeProvider from "@/components/ThemeProvider";
 import AppShell from "@/components/AppShell";
 
@@ -20,6 +21,10 @@ function renderShell() {
 
 beforeEach(() => {
   mockPathname.mockReturnValue("/contacts");
+  window.localStorage.clear();
+  delete document.documentElement.dataset.simpleHelp;
+  delete document.documentElement.dataset.textSize;
+  delete document.documentElement.dataset.contrast;
 });
 
 describe("AppShell", () => {
@@ -40,6 +45,10 @@ describe("AppShell", () => {
     );
     expect(screen.getByText("page body")).toBeInTheDocument();
     expect(screen.getByRole("contentinfo")).toHaveTextContent(/^web v/);
+    expect(screen.getByRole("link", { name: /skip to contacts/i })).toHaveAttribute(
+      "href",
+      "#main-content",
+    );
   });
 
   it("marks the current route as active", () => {
@@ -81,5 +90,24 @@ describe("AppShell", () => {
     expect(screen.getByRole("link", { name: "Contacts" })).not.toHaveAttribute(
       "aria-current",
     );
+  });
+
+  it("opens accessibility help and applies reader-friendly settings", async () => {
+    renderShell();
+
+    await userEvent.click(screen.getByRole("button", { name: /accessibility and help/i }));
+
+    expect(
+      screen.getByRole("dialog", { name: /accessibility and plain language help/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/quick guide/i)).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("switch", { name: /plain words/i }));
+    await userEvent.click(screen.getByRole("switch", { name: /larger text/i }));
+    await userEvent.click(screen.getByRole("switch", { name: /more contrast/i }));
+
+    expect(document.documentElement.dataset.simpleHelp).toBe("on");
+    expect(document.documentElement.dataset.textSize).toBe("large");
+    expect(document.documentElement.dataset.contrast).toBe("more");
   });
 });

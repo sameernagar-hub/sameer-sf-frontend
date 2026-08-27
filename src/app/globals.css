@@ -78,6 +78,24 @@
     font-family: var(--font-sans, "Inter"), ui-sans-serif, system-ui, sans-serif;
   }
 
+  html[data-text-size="large"] {
+    font-size: 112.5%;
+  }
+
+  html[data-contrast="more"] {
+    --muted-foreground: 210 216 228;
+    --border: 104 114 132;
+    --hairline: 128 140 160;
+    --ring: 255 214 102;
+  }
+
+  html[data-theme="light"][data-contrast="more"] {
+    --muted-foreground: 44 50 60;
+    --border: 88 96 112;
+    --hairline: 96 106 124;
+    --ring: 10 75 180;
+  }
+
   code,
   pre,
   kbd,
@@ -99,9 +117,28 @@
     outline: 2px solid rgb(var(--ring));
     outline-offset: 2px;
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 }
 
 @layer components {
+  .simple-help {
+    display: none;
+  }
+
+  [data-simple-help="on"] .simple-help {
+    display: block;
+  }
+
   /* Avatar tint. The hue comes from the contact's email (see lib/contacts/format),
      so it is stable per person; only the lightness changes between themes. */
   .contact-avatar {

@@ -51,7 +51,11 @@ export default function ContactsToolbar({ query }: { query: ContactListQuery }) 
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
+    <div className="space-y-2">
+      <p id="contacts-search-help" className="simple-help text-sm leading-6 text-muted-foreground">
+        Search accepts partial words. Example: type &quot;ada&quot;, &quot;nasa&quot;, or a phone area code.
+      </p>
+      <div className="flex flex-wrap items-center gap-3" role="search">
       <div className="relative min-w-[220px] flex-1">
         <Search
           className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
@@ -64,6 +68,7 @@ export default function ContactsToolbar({ query }: { query: ContactListQuery }) 
           onChange={(event) => onSearchChange(event.target.value)}
           placeholder="Search name, email, company, or phone…"
           aria-label="Search contacts"
+          aria-describedby="contacts-search-help contacts-search-status"
           className="h-9 w-full rounded-md border border-border bg-input pl-9 pr-9 text-sm text-foreground placeholder:text-muted-foreground/70 focus:border-primary"
         />
         <span className="absolute right-2.5 top-1/2 -translate-y-1/2">
@@ -110,6 +115,10 @@ export default function ContactsToolbar({ query }: { query: ContactListQuery }) 
           ))}
         </select>
       </label>
+      <span id="contacts-search-status" role="status" aria-live="polite" className="sr-only">
+        {isPending ? "Updating contacts list" : "Contacts list ready"}
+      </span>
+      </div>
     </div>
   );
 }

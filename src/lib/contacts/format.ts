@@ -21,6 +21,30 @@ export function avatarHue(seed: string): number {
   return hash;
 }
 
+function escapeSvgText(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+}
+
+/** Local generated avatar image for contacts without an uploaded photo. */
+export function generatedAvatarDataUrl(
+  contact: Pick<Contact, "first_name" | "last_name" | "email">,
+): string {
+  const hue = avatarHue(contact.email);
+  const label = escapeSvgText(initials(contact) || "?");
+  const svg = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96">
+  <rect width="96" height="96" rx="48" fill="hsl(${hue} 72% 34%)"/>
+  <circle cx="24" cy="24" r="18" fill="hsl(${(hue + 42) % 360} 70% 48%)" opacity=".72"/>
+  <circle cx="74" cy="72" r="26" fill="hsl(${(hue + 184) % 360} 68% 42%)" opacity=".58"/>
+  <text x="48" y="57" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="700" fill="white">${label}</text>
+</svg>`.trim();
+
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
 // Rendered on the server and hydrated on the client, so pin the locale and zone
 // rather than letting each side pick its own and mismatch.
 const TIMESTAMP_FORMAT = new Intl.DateTimeFormat("en-GB", {

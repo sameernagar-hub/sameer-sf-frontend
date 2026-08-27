@@ -34,3 +34,7 @@ yarn-debug.log*
 yarn-error.log*
 /tmp/nextjs.log
 /.claude/
+
+# next.config auto-generates these for AI agents
+/AGENTS.md
+/CLAUDE.md

@@ -43,8 +43,8 @@ The landing route (`/` redirects here). What to check, top to bottom:
   selector. Both write to the URL, so the state survives a reload and is
   shareable.
 - **Table** — sortable `Name` and `Email` headers (the arrow shows the active
-  column and direction), an initials avatar per row, `Job title at Company` as
-  the subtitle, and per-row pencil (edit) and trash (delete) actions.
+  column and direction), a circular avatar image per row, `Job title at Company`
+  as the subtitle, and per-row pencil (edit) and trash (delete) actions.
 - **Footer row** — `Showing 1–3 of 3` with Previous/Next, both disabled on a
   single page.
 - **Version stamp** — `web v0.1.0 (build 2 · 8ce2dc0)` at the bottom of every
@@ -143,6 +143,10 @@ e2e/                      Playwright specs (run against the real API)
   named `addresses.primary`, so only one row can be primary in the UI. `PUT`
   sends the complete collection, which preserves existing rows during edit
   saves; an empty list deliberately clears all addresses.
+- **Avatars** — uploaded photos render directly from the contact payload. When a
+  contact has no photo, `generatedAvatarDataUrl` builds a deterministic inline
+  SVG from the contact's initials and email hue. It is local, stable, and does
+  not call an avatar API.
 - **Styling** — Tailwind against semantic CSS variables (`bg-background`,
   `text-muted-foreground`, `border-hairline`, …) defined in `src/app/globals.css`.
   Dark is the default; light lives under `[data-theme="light"]`. Add colours as

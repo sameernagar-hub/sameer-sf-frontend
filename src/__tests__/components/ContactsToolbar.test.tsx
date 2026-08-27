@@ -15,7 +15,11 @@ describe("ContactsToolbar", () => {
   it("pushes the search term into the URL after the debounce", async () => {
     render(<ContactsToolbar query={DEFAULT_LIST_QUERY} />);
 
-    await userEvent.type(screen.getByRole("searchbox"), "ada");
+    const search = screen.getByRole("searchbox");
+    expect(search).toHaveAccessibleDescription(/search accepts partial words/i);
+    expect(screen.getByRole("status")).toHaveTextContent("Contacts list ready");
+
+    await userEvent.type(search, "ada");
 
     await waitFor(() =>
       expect(replace).toHaveBeenCalledWith("/contacts?q=ada", { scroll: false }),

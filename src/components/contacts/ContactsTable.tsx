@@ -17,7 +17,11 @@ export default function ContactsTable({
   query: ContactListQuery;
 }) {
   return (
-    <div className="overflow-x-auto rounded-lg border border-border bg-card">
+    <div className="overflow-x-auto rounded-lg border border-border bg-card" aria-describedby="contacts-table-help">
+      <p id="contacts-table-help" className="simple-help border-b border-hairline px-4 py-2 text-sm leading-6 text-muted-foreground">
+        Each row is one person. Choose their name for details, the pencil to edit,
+        or the trash button to delete.
+      </p>
       <table className="w-full border-collapse text-sm">
         <caption className="sr-only">
           Contacts, sorted by {query.sortBy.replace("_", " ")} {query.order}

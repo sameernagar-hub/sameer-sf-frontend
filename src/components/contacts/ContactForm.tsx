@@ -70,7 +70,14 @@ export default function ContactForm({
   const addressKey = JSON.stringify(addresses);
 
   return (
-    <form action={formAction} noValidate className="space-y-8">
+    <form action={formAction} noValidate className="space-y-8" aria-describedby="contact-form-help">
+      <div
+        id="contact-form-help"
+        className="simple-help rounded-md border border-border bg-secondary/30 px-3 py-2.5 text-sm leading-6 text-muted-foreground"
+      >
+        Fill in the required boxes marked with a star. Optional boxes can stay
+        empty. If saving fails, the message appears next to the box to fix.
+      </div>
       {state.status === "error" && state.message ? (
         <div
           role="alert"

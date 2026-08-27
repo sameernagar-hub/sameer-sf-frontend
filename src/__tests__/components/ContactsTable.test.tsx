@@ -59,6 +59,20 @@ describe("ContactsTable", () => {
 
     expect(screen.getAllByText("—").length).toBeGreaterThan(0);
   });
+
+  it("renders a generated image avatar in each data row", () => {
+    const { container } = render(
+      <ContactsTable contacts={CONTACTS} query={DEFAULT_LIST_QUERY} />,
+    );
+
+    const bodyRows = container.querySelectorAll("tbody tr");
+    expect(bodyRows).toHaveLength(CONTACTS.length);
+    bodyRows.forEach((row) => {
+      const image = row.querySelector("img.contact-avatar");
+      expect(image).toHaveAttribute("src", expect.stringMatching(/^data:image\//));
+      expect(image).toHaveAttribute("aria-hidden", "true");
+    });
+  });
 });
 
 describe("Pagination", () => {

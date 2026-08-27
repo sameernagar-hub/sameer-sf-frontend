@@ -20,6 +20,7 @@ describe("ContactForm", () => {
   it("renders every editable field", () => {
     renderForm(jest.fn());
 
+    expect(screen.getByText(/required boxes marked with a star/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/first name/i)).toBeRequired();
     expect(screen.getByLabelText(/last name/i)).toBeRequired();
     expect(screen.getByLabelText(/^email/i)).toBeRequired();

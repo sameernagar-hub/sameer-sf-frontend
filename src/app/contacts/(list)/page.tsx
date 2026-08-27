@@ -54,6 +54,10 @@ export default async function ContactsPage({
               : "Manage the people in your address book."}
             <ApiStatusBadge health={health} />
           </p>
+          <p className="simple-help mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+            This page is your people list. Search to narrow the list, choose a name
+            to read details, or choose New contact to add someone.
+          </p>
         </div>
 
         <Link href="/contacts/new" className={buttonClasses("primary")}>
